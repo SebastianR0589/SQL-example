@@ -57,15 +57,16 @@ import fs from 'fs';
           ('Porsche', '911 Turbo', 1995, 12000, 'black', 1, false),
           ('Porsche', '944 Turbo', 1986, 48000, 'white', 4, true),
           ('Porsche', '356B', 1960, 265000, 'silver', 4, false),
+          ('Mercedes-Benz', '300SLR', 1955, 142000000, 'silver', 5, false),
           ('Bentley', 'T2', 1978, 52000, 'silver', 4, false);
 `);
 
-  // Load the SQL file
   const query = fs.readFileSync('query.sql', 'utf8');
 
-  // Executing simple queries for sections 1 - 3
-  const response = await db.query(query);
+  await db.exec(query)
+
+  const response = await db.query(`SELECT brand, model, year, price FROM cars;`)
 
   console.clear();
-  console.table(response.rows, ['brand', 'model', 'year', 'price', 'color', 'condition', 'sold']);
+  console.table(response.rows);
 })();
