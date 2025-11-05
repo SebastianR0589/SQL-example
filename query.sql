@@ -1,3 +1,4 @@
+--SQL queries for the cars database
 --select all data from cars table
 SELECT * FROM cars;
 
@@ -69,3 +70,7 @@ UPDATE cars SET price = price * 1.05 WHERE color = 'red';
 
 --delete all cars that have a condition of 0
 DELETE FROM cars WHERE condition = 0;
+
+-------------------------------------------------------------------
+--SQL queries for the dealerships table
+--
