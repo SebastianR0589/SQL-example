@@ -73,4 +73,42 @@ DELETE FROM cars WHERE condition = 0;
 
 -------------------------------------------------------------------
 --SQL queries for the dealerships table
---
+--select all data from dealerships table
+SELECT * FROM dealerships;
+
+-------------------------------------------------------------------
+--SQL queries for the staff table
+--select all data from staff table 
+SELECT * FROM staff;
+
+-------------------------------------------------------------------
+--SQL queries for Table joins
+--Left join sold cars with cars
+SELECT brand, model, price, sold, sold_price FROM sold_cars LEFT JOIN cars ON sold_cars.cars_id = cars.id;
+
+--Right join staff with dealerships
+SELECT name, role, city, state FROM staff RIGHT JOIN dealerships ON dealership_id = dealerships.id;
+
+--Inner join staff with dealerships
+SELECT name, role, city, state FROM staff INNER JOIN dealerships ON dealership_id = dealerships.id;
+
+--Full join staff with sold cars
+SELECT name, role, sold_price FROM staff FULL JOIN sold_cars ON staff.id = seller;
+
+--Aggregate function with join to find average car price per dealership location
+SELECT city, state, ROUND(AVG(price), 2) AS avg_price FROM cars	LEFT JOIN dealerships D ON dealership_id = D.id GROUP BY city, state;
+
+--Total sales made by each salesperson
+SELECT name, role, SUM(sold_price) AS total_sales FROM staff S LEFT JOIN sold_cars ON S.id = seller WHERE role = 'Salesperson' GROUP BY name, role ORDER BY total_sales DESC;
+
+--Count of unsold cars per dealership location
+SELECT city, state, COUNT(C.id) AS car_count FROM cars C RIGHT JOIN dealerships D ON dealership_id = D.id WHERE sold IS NOT TRUE GROUP BY city, state ORDER BY car_count;
+
+--Details of sold cars including car info, seller name, dealership city, and formatted sold date
+SELECT C.brand,	C.model, S.name AS seller_name,	D.city,	TO_CHAR(SC.sold_date, 'DD-MM-YYYY') AS date_of_sale FROM sold_cars SC INNER JOIN cars C ON SC.cars_id = C.id LEFT JOIN staff S ON SC.seller = S.id LEFT JOIN dealerships D ON S.dealership_id = D.id;
+
+--List of salespersons who have not sold any cars along with their dealership location
+SELECT S.name, S.role, D.city FROM sold_cars SC	FULL JOIN staff S ON SC.seller = S.id LEFT JOIN dealerships D ON S.dealership_id = D.id WHERE SC.id IS NULL	AND S.role = 'Salesperson';
+
+--Number of cars sold per dealership location
+SELECT D.city, D.state,	COUNT(SC.id) AS cars_sold FROM sold_cars SC	LEFT JOIN cars C ON SC.cars_id = C.id RIGHT JOIN dealerships D ON C.dealership_id = D.id GROUP BY D.city, D.state ORDER BY cars_sold DESC;

@@ -9,6 +9,18 @@ import fs from 'fs';
   await db.exec(createTables);
   await db.exec(insertCarsData);
 
+  const populateTables = fs.readFileSync('populate-tables.sql', 'utf8');
+  await db.exec(populateTables);
+
+  const alterTable = fs.readFileSync('alter-table.sql', 'utf8');
+  await db.exec(alterTable);
+
+  const alterConstraints = fs.readFileSync('alter-constraints.sql', 'utf-8');
+  await db.exec(alterConstraints);
+
+  const insertNewData = fs.readFileSync('insert-new-data.sql', 'utf-8');
+  await db.exec(insertNewData);
+
   const query = fs.readFileSync('query.sql', 'utf8');
 
   const response = await db.query(query);
