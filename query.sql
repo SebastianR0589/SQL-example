@@ -112,3 +112,62 @@ SELECT S.name, S.role, D.city FROM sold_cars SC	FULL JOIN staff S ON SC.seller =
 
 --Number of cars sold per dealership location
 SELECT D.city, D.state,	COUNT(SC.id) AS cars_sold FROM sold_cars SC	LEFT JOIN cars C ON SC.cars_id = C.id RIGHT JOIN dealerships D ON C.dealership_id = D.id GROUP BY D.city, D.state ORDER BY cars_sold DESC;
+
+-------------------------------------------------------------------
+--Advanced SQL queries
+--Select all cars that cost more than any car sold by 'Frankie Fender'
+SELECT brand, model, price FROM cars WHERE price > ANY (SELECT SC.sold_price FROM sold_cars SC JOIN staff S ON SC.seller = S.id WHERE S.name = 'Frankie Fender') AND sold IS FALSE;
+
+--Find all Volkswagen that are cheaper than any Ford car
+SELECT brand, model, price FROM cars WHERE price < ANY (SELECT price FROM cars WHERE brand = 'Ford') AND brand = 'Volkswagen';
+
+--List all staff members who have sold a car for more than the average sold price of all cars
+SELECT S.name, SC.sold_price FROM staff S JOIN sold_cars SC ON S.id = SC.seller WHERE SC.sold_price > ANY (SELECT SUM(sold_price) FROM sold_cars GROUP BY seller);
+
+--Find all cars that are more expensive than the total sales made by any dealership
+SELECT brand, model, price FROM cars WHERE price > ANY (SELECT SUM(sold_price) FROM sold_cars JOIN staff ON staff.id = sold_cars.seller GROUP BY staff.dealership_id);
+
+--Select all cars that are cheaper than all cars with a condition rating of 3
+SELECT brand, model, condition, price FROM cars WHERE price < ALL (SELECT price FROM cars WHERE condition = 3);
+
+--Find all cars that are older than all Ford cars
+SELECT brand, model, year FROM cars WHERE year < ALL (SELECT year FROM cars WHERE brand = 'Ford') ORDER BY year;
+
+--List all cars that cost more than all sold cars
+SELECT brand, model, city, price FROM cars JOIN dealerships ON dealership_id = dealerships.id WHERE price > ALL (SELECT sold_price FROM sold_cars) ORDER BY city;
+
+--Select all colors of cars that have never been sold
+SELECT DISTINCT color FROM cars WHERE NOT EXISTS (SELECT 1 FROM sold_cars WHERE cars_id = cars.id) ORDER BY color;
+
+--Find all dealership locations that have no cars in their inventory
+SELECT city, state, TO_CHAR(established, 'YYYY-MM-DD') AS est FROM dealerships D WHERE NOT EXISTS (SELECT 1 FROM cars WHERE dealership_id = D.id);
+
+--List all dealership locations that have at least one car priced over 50000
+SELECT city, state FROM dealerships DWHERE EXISTS (SELECT 1 FROM cars CWHERE C.dealership_id = D.id AND C.price > 50000);
+
+--Find all salespersons who have not sold any car for more than 45000
+SELECT name FROM staff S WHERE role = 'Salesperson' AND NOT EXISTS (SELECT 1 FROM sold_cars SC WHERE SC.seller = s.id AND SC.sold_price > 45000) ND EXISTS (SELECT 1 FROM sold_cars SC where seller = s.id);
+
+--Select all cars and categorize them based on their condition
+SELECT brand, model, condition, CASE WHEN condition >= 4 THEN 'Excellent' WHEN condition >= 3 THEN 'Fair' WHEN condition >= 1 THEN 'Poor' ELSE 'Wrecked' END AS condition_label FROM cars ORDER BY condition DESC;
+
+--Calculate bonuses for sales staff based on their total sales
+SELECT S.name, S.role, S.dealership_id, SUM(SC.sold_price) AS total_sales, CASE WHEN SUM(SC.sold_price) >= 100000 THEN 10000 WHEN SUM(SC.sold_price) >= 75000 THEN 5000 ELSE 1000 END AS bonus FROM sold_cars SC RIGHT JOIN staff S ON SC.seller = S.id GROUP BY (S.name, S.role, S.dealership_id) ORDER BY bonus, dealership_id;
+
+--Select all unsold cars that meet minimum condition requirements based on their year
+SELECT brand, model, condition, year, price FROM cars WHERE sold IS FALSE AND CASE WHEN year <= 1960 THEN condition >= 4 WHEN year <= 1970 THEN condition >= 3 WHEN year <= 1980 THEN condition >= 2 WHEN year <= 1990 THEN condition >= 1 ELSE TRUE END ORDER BY year, condition;
+
+--Select all unsold cars with price limits based on their condition rating
+SELECT brand, model, condition, price FROM cars WHERE sold IS FALSE	AND CASE WHEN condition >= 4 THEN price < 100000 WHEN condition >= 3 THEN price < 50000 WHEN condition >= 1 THEN price < 20000 ELSE TRUE END ORDER BY condition;
+
+--Update prices of unsold Aston Martin cars based on model type
+UPDATE cars SET price = price * CASE WHEN model = 'DB5' THEN 1.15 WHEN model LIKE 'DB_' THEN 1.1 ELSE 1.05 END WHERE sold IS FALSE AND brand = 'Aston Martin';
+
+--Update prices of unsold cars based on dealership location
+UPDATE cars SET price = price * CASE WHEN dealership_id = 1 THEN 1.2 WHEN dealership_id = 3 THEN 0.8 ELSE 1.0 END WHERE sold IS FALSE;
+
+--Generate a performance report for each dealership based on total sales
+SELECT D.city, COUNT(sc.id) AS total_sales, CASE WHEN COUNT(sc.id) >= 10 THEN 'Outperforming' WHEN COUNT(sc.id) >= 5 THEN 'Meeting targets' WHEN COUNT(sc.id) >= 1 THEN 'Underperforming' ELSE 'No sales' END AS performance_level FROM dealerships D LEFT JOIN staff S ON S.dealership_id = D.id LEFT JOIN sold_cars sc ON sc.seller = S.id GROUP BY D.city ORDER BY total_sales;
+
+--Count of sold cars per quarter
+SELECT CASE	WHEN EXTRACT(MONTH FROM sold_date) IN (1,2,3) THEN 'Q1'	WHEN EXTRACT(MONTH FROM sold_date) IN (4,5,6) THEN 'Q2' WHEN EXTRACT(MONTH FROM sold_date) IN (7,8,9) THEN 'Q3'	ELSE 'Q4' END AS quarter, COUNT(*) AS sold_cars FROM sold_cars GROUP BY quarter	ORDER BY quarter;
